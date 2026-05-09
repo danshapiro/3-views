@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -112,6 +114,17 @@ func findSkillRoot() string {
 	if err != nil {
 		return "."
 	}
+	dir := filepath.Dir(exe)
+	for i := 0; i < 3; i++ { // check up to 3 levels up
+		if _, err := os.Stat(filepath.Join(dir, "config", "models.json")); err == nil {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			break
+		}
+		dir = parent
+	}
 	return filepath.Join(filepath.Dir(exe), "..")
 }
 
@@ -164,6 +177,11 @@ func runAgent(ctx context.Context, label, model, promptFile, cwd, runDir string,
 
 	output, err := cmd.Output()
 	result.DurationMs = time.Since(start).Milliseconds()
+
+	if len(output) > 0 {
+		result.Content = string(output)
+		os.WriteFile(stdoutPath, output, 0o644)
+	}
 	
 	if err != nil {
 		if ctx.Err() != nil {
@@ -175,9 +193,8 @@ func runAgent(ctx context.Context, label, model, promptFile, cwd, runDir string,
 	}
 
 	result.Completed = true
-	result.Content = string(output)
 
-	os.WriteFile(stdoutPath, output, 0o644)
+	// output was already written and stored in result.Content if len > 0
 }
 
 func main() {
@@ -202,6 +219,11 @@ func main() {
 	}
 	if *agentCount > 6 {
 		*agentCount = 6
+	}
+
+	if _, err := exec.LookPath("opencode"); err != nil {
+		fmt.Fprintln(os.Stderr, "Error: opencode binary not found in PATH")
+		os.Exit(1)
 	}
 
 	skillRoot := findSkillRoot()
@@ -254,6 +276,13 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-sigCh
+		cancel()
+	}()
+
 	runID := fmt.Sprintf("%d", time.Now().UnixMilli())
 
 	fmt.Printf("===== 3-VIEWS RUN: %s =====\n", runID)
@@ -303,6 +332,10 @@ func main() {
 
 	fmt.Println("===== 3-VIEWS END =====")
 
-	mdData, _ := json.MarshalIndent(md, "", "  ")
-	os.WriteFile(filepath.Join(runDir, "metadata.json"), mdData, 0o644)
+	mdData, err := json.MarshalIndent(md, "", "  ")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error marshaling metadata: %v\n", err)
+	} else if err := os.WriteFile(filepath.Join(runDir, "metadata.json"), mdData, 0o644); err != nil {
+		fmt.Fprintf(os.Stderr, "Error writing metadata.json: %v\n", err)
+	}
 }
