@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -96,6 +97,14 @@ func findSkillRoot() string {
 	if root := os.Getenv("3_VIEWS_ROOT"); root != "" {
 		return root
 	}
+	
+	// Use runtime.Caller to find the location of main.go, which works flawlessly with 'go run'
+	_, filename, _, ok := runtime.Caller(0)
+	if ok {
+		return filepath.Join(filepath.Dir(filename), "..", "..")
+	}
+
+	// Fallback to executable path
 	exe, err := os.Executable()
 	if err != nil {
 		return "."

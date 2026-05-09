@@ -7,10 +7,26 @@ description: Use only when the user asks for "3-views" specifically. Do not use 
 
 Run N independent `opencode run` invocations against the same query, each using a different hidden model. Each subagent is read-only. Results are labeled **alpha**, **bravo**, **charlie** (default 3), up to **delta**, **echo**, **foxtrot** (max 6).
 
-## Build
+## Run
+
+Use `go run` directly from the skill's root directory:
+
+Preferred for long prompts:
 
 ```bash
-cd scripts/3-views && go build -o 3-views .
+cd scripts/3-views && go run . --query-file "<path>" --cwd "<working-directory>"
+```
+
+Inline query:
+
+```bash
+cd scripts/3-views && go run . --query "<query text>" --cwd "<working-directory>"
+```
+
+Custom agent count (1–6):
+
+```bash
+cd scripts/3-views && go run . --query-file "<path>" --cwd "<cwd>" --agents 5
 ```
 
 Set `3_VIEWS_ROOT` to the skill directory if the binary is relocated. Otherwise the runner resolves `config/models.json` relative to the executable.
@@ -42,9 +58,7 @@ Inline query:
 
 ## Important
 
-This command may take up to 60 minutes. Wait for it to complete. After 60 minutes, the runner will terminate remaining subagent processes and return the completed results available so far. Synthesize only from the complete result sections returned by the runner.
-
-Each subagent operates read-only on the repository.
+This command may take up to 60 minutes. Wait that long for it to complete. If you interrupt sooner, the user will pay the cost of the queries but get no benefit, and have to restart.
 
 ## Output
 

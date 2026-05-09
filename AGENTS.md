@@ -2,19 +2,11 @@
 
 Agent skill that runs N independent `opencode run` subagents against the same query with different hidden models, returning labeled results.
 
-## Build
-
-```bash
-cd scripts/3-views && go build -o 3-views .
-```
-
-Binary is gitignored; rebuild after Go source changes.
-
 ## Run
 
 ```bash
-./scripts/3-views/3-views --query "<text>" --cwd "<dir>"
-./scripts/3-views/3-views --query-file "<path>" --cwd "<dir>" --agents 5
+cd scripts/3-views && go run . --query "<text>" --cwd "<dir>"
+cd scripts/3-views && go run . --query-file "<path>" --cwd "<dir>" --agents 5
 ```
 
 `--cwd` is required. Default `--agents 3`, max 6. Default `--timeout 60` (minutes).
