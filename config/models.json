@@ -1,8 +1,8 @@
 {
-  "alpha": "provider/model-a",
-  "bravo": "provider/model-b",
-  "charlie": "provider/model-c",
-  "delta": "provider/model-d",
-  "echo": "provider/model-e",
-  "foxtrot": "provider/model-f"
+  "alpha": "google/gemini-3.1-pro-preview",
+  "bravo": "opencode-go/mimo-v2.5-pro",
+  "charlie": "opencode-go/kimi-k2.6",
+  "delta": "minimax/MiniMax-M2.7",
+  "echo": "zai/glm-5.1",
+  "foxtrot": "opencode-go/deepseek-v4-pro"
 }
