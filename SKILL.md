@@ -1,6 +1,6 @@
 ---
-name: three-views
-description: Run multiple independent agents against the same query using different hidden models, returning all labeled results. Use when you need diverse perspectives, cross-validation, comparison, or consensus on a task. Invoked for requests involving multiple viewpoints, second opinions, parallel analysis, or getting several takes on the same problem.
+name: 3-views
+description: Use only when the user asks for "3-views" specifically. Do not use otherwise. It sends a single command to 3 different LLM models.
 ---
 
 # Three Views
@@ -10,29 +10,23 @@ Run N independent `opencode run` invocations against the same query, each using 
 ## Build
 
 ```bash
-cd scripts/three-views && go build -o three-views .
+cd scripts/3-views && go build -o 3-views .
 ```
 
-Set `THREE_VIEWS_ROOT` to the skill directory if the binary is relocated. Otherwise the runner resolves `config/models.json` relative to the executable.
+Set `3_VIEWS_ROOT` to the skill directory if the binary is relocated. Otherwise the runner resolves `config/models.json` relative to the executable.
 
 ## Run
 
 Preferred for long prompts:
 
 ```bash
-three-views --query-file "<path>" --cwd "<working-directory>"
+3-views --query-file "<path>" --cwd "<working-directory>"
 ```
 
 Inline query:
 
 ```bash
-three-views --query "<query text>" --cwd "<working-directory>"
-```
-
-Custom agent count (1–6):
-
-```bash
-three-views --query-file "<path>" --cwd "<cwd>" --agents 5
+3-views --query "<query text>" --cwd "<working-directory>"
 ```
 
 ## Flags
@@ -55,7 +49,7 @@ Each subagent operates read-only on the repository.
 ## Output
 
 ```text
-===== THREE-VIEWS RUN: <run-id> =====
+===== 3-VIEWS RUN: <run-id> =====
 Run directory: <path>
 Agents requested: <N>
 Timeout: <N> minutes
@@ -68,7 +62,7 @@ Saved response: <path-to-alpha.md>
 ===== AGENT BRAVO RESULT =====
 ...
 
-===== THREE-VIEWS END =====
+===== 3-VIEWS END =====
 ```
 
 Failed or timed-out agents appear in label order with `STATUS: timed out` or `STATUS: failed` and a log path.

@@ -93,7 +93,7 @@ func defaultPermConfig() permEntry {
 }
 
 func findSkillRoot() string {
-	if root := os.Getenv("THREE_VIEWS_ROOT"); root != "" {
+	if root := os.Getenv("3_VIEWS_ROOT"); root != "" {
 		return root
 	}
 	exe, err := os.Executable()
@@ -211,7 +211,7 @@ func main() {
 
 	runDir := *outDir
 	if runDir == "" {
-		runDir = filepath.Join(os.TempDir(), fmt.Sprintf("three-views-%d", time.Now().UnixMilli()))
+		runDir = filepath.Join(os.TempDir(), fmt.Sprintf("3-views-%d", time.Now().UnixMilli()))
 	}
 	if err := os.MkdirAll(runDir, 0o755); err != nil {
 		fmt.Fprintf(os.Stderr, "Error creating run directory: %v\n", err)
@@ -236,7 +236,7 @@ func main() {
 
 	runID := fmt.Sprintf("%d", time.Now().UnixMilli())
 
-	fmt.Printf("===== THREE-VIEWS RUN: %s =====\n", runID)
+	fmt.Printf("===== 3-VIEWS RUN: %s =====\n", runID)
 	fmt.Printf("Run directory: %s\n", runDir)
 	fmt.Printf("Agents requested: %d\n", *agentCount)
 	fmt.Printf("Timeout: %d minutes\n\n", *timeoutMin)
@@ -281,7 +281,7 @@ func main() {
 		fmt.Println()
 	}
 
-	fmt.Println("===== THREE-VIEWS END =====")
+	fmt.Println("===== 3-VIEWS END =====")
 
 	mdData, _ := json.MarshalIndent(md, "", "  ")
 	os.WriteFile(filepath.Join(runDir, "metadata.json"), mdData, 0o644)
