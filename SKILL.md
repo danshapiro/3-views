@@ -53,7 +53,7 @@ Inline query:
 | `--query` | — | Inline query text (mutually exclusive with `--query-file`) |
 | `--cwd` | — | Working directory for subagents (required) |
 | `--agents` | 3 | Number of agents to launch (1–6) |
-| `--out-dir` | OS temp dir | Output directory |
+| `--out-dir` | OS temp dir | Base directory for the unique run folder |
 | `--timeout` | 60 | Wall-clock timeout in minutes |
 
 ## Important

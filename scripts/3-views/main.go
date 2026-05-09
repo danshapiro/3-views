@@ -218,11 +218,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	runDir := *outDir
-	if runDir == "" {
-		runDir = filepath.Join(os.TempDir(), fmt.Sprintf("3-views-%d", time.Now().UnixMilli()))
-	}
-	if err := os.MkdirAll(runDir, 0o755); err != nil {
+	runDir, err := os.MkdirTemp(*outDir, "3-views-*")
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error creating run directory: %v\n", err)
 		os.Exit(1)
 	}
