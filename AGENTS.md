@@ -25,3 +25,37 @@ cd scripts/3-views && go run . --query-file "<path>" --cwd "<dir>" --agents 5
 - Output is always emitted in label order regardless of completion order
 - All subagents are read-only (no edit, no write, restricted bash)
 - Each run creates a temp directory with `{label}.md`, `{label}.stderr.log`, `metadata.json`, `query.txt`
+- **No extraneous docs:** Do not create `README.md`, `CHANGELOG.md`, or other standard repo files. The product is `SKILL.md` + its scripts/configs.
+
+## Installing locally
+
+Claude Code loads skills from `~/.claude/skills/<name>/`. OpenCode reads the same directory. Codex loads from `~/.agents/skills/<name>/`.
+
+**Linux / macOS / WSL:**
+
+```bash
+mkdir -p ~/.claude/skills ~/.agents/skills
+rsync -a --exclude='.opencode/' --exclude='.git/' "$(pwd)/" ~/.claude/skills/3-views/
+rsync -a --exclude='.opencode/' --exclude='.git/' "$(pwd)/" ~/.agents/skills/3-views/
+```
+
+If running under WSL, also install to the Windows side so tools launched from Windows can find it:
+
+```bash
+if grep -qi microsoft /proc/version 2>/dev/null; then
+  win_home="$(wslpath "$(powershell.exe '$env:USERPROFILE' 2>/dev/null | tr -d '\r')")"
+  mkdir -p "$win_home/.claude/skills" "$win_home/.agents/skills"
+  rsync -a --exclude='.opencode/' --exclude='.git/' "$(pwd)/" "$win_home/.claude/skills/3-views/"
+  rsync -a --exclude='.opencode/' --exclude='.git/' "$(pwd)/" "$win_home/.agents/skills/3-views/"
+fi
+```
+
+**Windows (PowerShell):**
+
+```powershell
+New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.claude\skills", "$env:USERPROFILE\.agents\skills"
+Copy-Item -Recurse -Force "$(Get-Location)\*" "$env:USERPROFILE\.claude\skills\3-views" -Exclude ".opencode"
+Copy-Item -Recurse -Force "$(Get-Location)\*" "$env:USERPROFILE\.agents\skills\3-views" -Exclude ".opencode"
+```
+
+Copy rather than symlink so you can edit locally without every change immediately taking effect. Run the copy again to update the installed version after local changes.
