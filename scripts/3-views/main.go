@@ -16,8 +16,7 @@ import (
 
 var labels = []string{"alpha", "bravo", "charlie", "delta", "echo", "foxtrot"}
 
-const subagentInstruction = `
-
+const subagentInstruction = `<instructions>
 You are one of several independent agents answering the same request.
 
 Inspect the repository and available local context as needed.
@@ -27,7 +26,7 @@ Treat the repository as read-only. Use read-only commands and inspection tools.
 When additional information or an action is needed from the parent agent, include an "Investigation requests for parent agent" section with exact commands, files, logs, hosts, credentials, or data needed.
 
 Answer the user's query directly and completely.
-`
+</instructions>`
 
 type modelsConfig map[string]string
 
@@ -43,6 +42,8 @@ type permEntry struct {
 
 type agentResult struct {
 	Label      string
+	Model      string
+	DurationMs int64
 	Completed  bool
 	Content    string
 	Err        error
@@ -62,6 +63,8 @@ type metadata struct {
 
 type result struct {
 	Status     string `json:"status"`
+	Model      string `json:"model"`
+	DurationMs int64  `json:"duration_ms"`
 	OutputFile string `json:"output_file,omitempty"`
 	Error      string `json:"error,omitempty"`
 }
@@ -131,13 +134,15 @@ func loadQuery(queryFile, queryInline string) (string, string, error) {
 		if err != nil {
 			return "", "", fmt.Errorf("reading query file: %w", err)
 		}
-		return strings.TrimSpace(string(data)), "query.txt", nil
+		return strings.TrimSpace(string(data)), queryFile, nil
 	}
-	return queryInline, "query.txt", nil
+	return queryInline, "inline", nil
 }
 
 func runAgent(ctx context.Context, label, model, promptFile, cwd, runDir string, permJSON []byte, result *agentResult) {
+	start := time.Now()
 	result.Label = label
+	result.Model = model
 
 	stderrPath := filepath.Join(runDir, label+".stderr.log")
 	stdoutPath := filepath.Join(runDir, label+".md")
@@ -158,6 +163,8 @@ func runAgent(ctx context.Context, label, model, promptFile, cwd, runDir string,
 	cmd.Stderr = stderrFile
 
 	output, err := cmd.Output()
+	result.DurationMs = time.Since(start).Milliseconds()
+	
 	if err != nil {
 		if ctx.Err() != nil {
 			result.Completed = false
@@ -229,7 +236,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fullPrompt := queryText + subagentInstruction
+	fullPrompt := fmt.Sprintf("<user_query>\n%s\n</user_query>\n\n%s", queryText, subagentInstruction)
 	promptFile := filepath.Join(runDir, "prompt.txt")
 	if err := os.WriteFile(promptFile, []byte(fullPrompt), 0o644); err != nil {
 		fmt.Fprintf(os.Stderr, "Error writing prompt file: %v\n", err)
@@ -283,13 +290,13 @@ func main() {
 
 		if r.Completed {
 			fmt.Println(r.Content)
-			md.Results[r.Label] = result{Status: "completed", OutputFile: r.Label + ".md"}
+			md.Results[r.Label] = result{Status: "completed", Model: r.Model, DurationMs: r.DurationMs, OutputFile: r.Label + ".md"}
 		} else if r.Err != nil {
 			fmt.Printf("STATUS: failed\nERROR: %v\nSee log: %s\n", r.Err, r.StderrPath)
-			md.Results[r.Label] = result{Status: "failed", Error: r.Err.Error()}
+			md.Results[r.Label] = result{Status: "failed", Model: r.Model, DurationMs: r.DurationMs, Error: r.Err.Error()}
 		} else {
 			fmt.Printf("STATUS: timed out\nERROR: Reached %d minute run timeout before this agent completed.\nSee log: %s\n", *timeoutMin, r.StderrPath)
-			md.Results[r.Label] = result{Status: "timed_out", Error: "timeout"}
+			md.Results[r.Label] = result{Status: "timed_out", Model: r.Model, DurationMs: r.DurationMs, Error: "timeout"}
 		}
 		fmt.Println()
 	}
