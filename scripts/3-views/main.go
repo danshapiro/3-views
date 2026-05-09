@@ -142,6 +142,9 @@ func loadModels(skillRoot string) (modelsConfig, error) {
 }
 
 func loadQuery(queryFile, queryInline string) (string, string, error) {
+	if queryFile != "" && queryInline != "" {
+		return "", "", fmt.Errorf("--query and --query-file are mutually exclusive")
+	}
 	if queryFile != "" {
 		data, err := os.ReadFile(queryFile)
 		if err != nil {
@@ -180,9 +183,12 @@ func runAgent(ctx context.Context, label, model, promptFile, cwd, runDir string,
 
 	if len(output) > 0 {
 		result.Content = string(output)
-		os.WriteFile(stdoutPath, output, 0o644)
+		if wErr := os.WriteFile(stdoutPath, output, 0o644); wErr != nil {
+			result.Err = fmt.Errorf("writing output file %s: %w", stdoutPath, wErr)
+			return
+		}
 	}
-	
+
 	if err != nil {
 		if ctx.Err() != nil {
 			result.Completed = false
