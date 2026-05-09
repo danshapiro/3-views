@@ -136,7 +136,7 @@ func loadQuery(queryFile, queryInline string) (string, string, error) {
 	return queryInline, "query.txt", nil
 }
 
-func runAgent(ctx context.Context, label, model, prompt, cwd, runDir string, permJSON []byte, result *agentResult) {
+func runAgent(ctx context.Context, label, model, promptFile, cwd, runDir string, permJSON []byte, result *agentResult) {
 	result.Label = label
 
 	stderrPath := filepath.Join(runDir, label+".stderr.log")
@@ -151,7 +151,7 @@ func runAgent(ctx context.Context, label, model, prompt, cwd, runDir string, per
 	}
 	defer stderrFile.Close()
 
-	args := []string{"run", "--model", model, "--dir", cwd, "--", prompt + subagentInstruction}
+	args := []string{"run", "--model", model, "--dir", cwd, "-f", promptFile, "--", "Follow the instructions in the attached prompt.txt file."}
 	cmd := exec.CommandContext(ctx, "opencode", args...)
 	cmd.Dir = cwd
 	cmd.Env = append(os.Environ(), "OPENCODE_PERMISSION="+string(permJSON))
@@ -229,6 +229,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	fullPrompt := queryText + subagentInstruction
+	promptFile := filepath.Join(runDir, "prompt.txt")
+	if err := os.WriteFile(promptFile, []byte(fullPrompt), 0o644); err != nil {
+		fmt.Fprintf(os.Stderr, "Error writing prompt file: %v\n", err)
+		os.Exit(1)
+	}
+
 	permConfig := defaultPermConfig()
 	permJSON, err := json.Marshal(permConfig)
 	if err != nil {
@@ -254,7 +261,7 @@ func main() {
 		wg.Add(1)
 		go func(idx int, label, model string) {
 			defer wg.Done()
-			runAgent(ctx, label, model, queryText, *cwd, runDir, permJSON, &results[idx])
+			runAgent(ctx, label, model, promptFile, *cwd, runDir, permJSON, &results[idx])
 		}(i, label, models[label])
 	}
 

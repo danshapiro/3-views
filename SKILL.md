@@ -31,20 +31,6 @@ cd scripts/3-views && go run . --query-file "<path>" --cwd "<cwd>" --agents 5
 
 Set `3_VIEWS_ROOT` to the skill directory if the binary is relocated. Otherwise the runner resolves `config/models.json` relative to the executable.
 
-## Run
-
-Preferred for long prompts:
-
-```bash
-3-views --query-file "<path>" --cwd "<working-directory>"
-```
-
-Inline query:
-
-```bash
-3-views --query "<query text>" --cwd "<working-directory>"
-```
-
 ## Flags
 
 | Flag | Default | Description |
