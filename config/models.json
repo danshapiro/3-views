@@ -1,0 +1,8 @@
+{
+  "alpha": "provider/model-a",
+  "bravo": "provider/model-b",
+  "charlie": "provider/model-c",
+  "delta": "provider/model-d",
+  "echo": "provider/model-e",
+  "foxtrot": "provider/model-f"
+}
