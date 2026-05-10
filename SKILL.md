@@ -7,6 +7,10 @@ description: Use only when the user asks for "3-views" specifically. Do not use 
 
 Run N independent `opencode run` invocations against the same query, each using a different hidden model. Each subagent is read-only. Results are labeled **alpha**, **bravo**, **charlie** (default 3), up to **delta**, **echo**, **foxtrot** (max 6).
 
+## Best Practices  
+
+You're being asked to invoke this because the user wants an outside perspective. It's easy to accidently inject your own bias if you're invested in the process. To combat this, pass along the user's request, with added data if necessary. Don't add add focuses or limitations unless the user requested them. For example, if the user asked you to use this skill to do a code review, the prompt would simply be 'do a code review on...'. If the user asks you to do another code review, you would use the exact same prompt - not "do a second code review" or "focus on the changes" etc. 
+
 ## Run
 
 Use `go run` directly from the skill's root directory:
