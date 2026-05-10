@@ -94,7 +94,7 @@ func defaultPermConfig() permEntry {
 			"cat *":       "allow",
 			"*":           "deny",
 		},
-		ExternalDirectory: "deny",
+		ExternalDirectory: "allow",
 	}
 }
 
