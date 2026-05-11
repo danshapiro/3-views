@@ -35,8 +35,8 @@ Claude Code loads skills from `~/.claude/skills/<name>/`. OpenCode reads the sam
 
 ```bash
 mkdir -p ~/.claude/skills ~/.agents/skills
-rsync -a --exclude='.opencode/' --exclude='.git/' --exclude='.claude/' --exclude='.agents/' "$(pwd)/" ~/.claude/skills/3-views/
-rsync -a --exclude='.opencode/' --exclude='.git/' --exclude='.claude/' --exclude='.agents/' "$(pwd)/" ~/.agents/skills/3-views/
+rsync -a --delete --exclude='.opencode/' --exclude='.git/' --exclude='.claude/' --exclude='.agents/' --exclude='.worktrees/' "$(pwd)/" ~/.claude/skills/3-views/
+rsync -a --delete --exclude='.opencode/' --exclude='.git/' --exclude='.claude/' --exclude='.agents/' --exclude='.worktrees/' "$(pwd)/" ~/.agents/skills/3-views/
 ```
 
 If running under WSL, also install to the Windows side so tools launched from Windows can find it:
@@ -45,8 +45,8 @@ If running under WSL, also install to the Windows side so tools launched from Wi
 if grep -qi microsoft /proc/version 2>/dev/null; then
   win_home="$(wslpath "$(powershell.exe '$env:USERPROFILE' 2>/dev/null | tr -d '\r')")"
   mkdir -p "$win_home/.claude/skills" "$win_home/.agents/skills"
-  rsync -a --exclude='.opencode/' --exclude='.git/' --exclude='.claude/' --exclude='.agents/' "$(pwd)/" "$win_home/.claude/skills/3-views/"
-  rsync -a --exclude='.opencode/' --exclude='.git/' --exclude='.claude/' --exclude='.agents/' "$(pwd)/" "$win_home/.agents/skills/3-views/"
+  rsync -a --delete --exclude='.opencode/' --exclude='.git/' --exclude='.claude/' --exclude='.agents/' --exclude='.worktrees/' "$(pwd)/" "$win_home/.claude/skills/3-views/"
+  rsync -a --delete --exclude='.opencode/' --exclude='.git/' --exclude='.claude/' --exclude='.agents/' --exclude='.worktrees/' "$(pwd)/" "$win_home/.agents/skills/3-views/"
 fi
 ```
 
@@ -54,8 +54,10 @@ fi
 
 ```powershell
 New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.claude\skills", "$env:USERPROFILE\.agents\skills"
-Copy-Item -Recurse -Force "$(Get-Location)\*" "$env:USERPROFILE\.claude\skills\3-views" -Exclude ".opencode", ".claude", ".agents"
-Copy-Item -Recurse -Force "$(Get-Location)\*" "$env:USERPROFILE\.agents\skills\3-views" -Exclude ".opencode", ".claude", ".agents"
+Remove-Item -Recurse -Force "$env:USERPROFILE\.claude\skills\3-views" -ErrorAction SilentlyContinue
+Copy-Item -Recurse -Force "$(Get-Location)\*" "$env:USERPROFILE\.claude\skills\3-views" -Exclude ".opencode", ".claude", ".agents", ".worktrees"
+Remove-Item -Recurse -Force "$env:USERPROFILE\.agents\skills\3-views" -ErrorAction SilentlyContinue
+Copy-Item -Recurse -Force "$(Get-Location)\*" "$env:USERPROFILE\.agents\skills\3-views" -Exclude ".opencode", ".claude", ".agents", ".worktrees"
 ```
 
 Copy rather than symlink so you can edit locally without every change immediately taking effect. Run the copy again to update the installed version after local changes.
