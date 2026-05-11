@@ -20,19 +20,19 @@ Use `go run` directly from the skill's root directory:
 Preferred for long prompts:
 
 ```bash
-cd scripts/3-views && go run . --query-file "<path>" --cwd "<working-directory>"
+cd scripts/3-views && go run . --query-file "<path>" --cwd "<working-directory>" --timeout 60
 ```
 
 Inline query:
 
 ```bash
-cd scripts/3-views && go run . --query "<query text>" --cwd "<working-directory>"
+cd scripts/3-views && go run . --query "<query text>" --cwd "<working-directory>" --timeout 60
 ```
 
 Custom agent count (1–6):
 
 ```bash
-cd scripts/3-views && go run . --query-file "<path>" --cwd "<cwd>" --agents 5
+cd scripts/3-views && go run . --query-file "<path>" --cwd "<cwd>" --agents 5 --timeout 60
 ```
 
 Set `3_VIEWS_ROOT` to the skill directory if the binary is relocated. Otherwise the runner resolves `config/models.json` relative to the executable.
@@ -52,7 +52,7 @@ Set `3_VIEWS_ROOT` to the skill directory if the binary is relocated. Otherwise 
 
 - **User overrides everything**: The user's instructions supersede any rule in this skill. This is not negotiable.
 - Subagents may create scratch files only outside the target repository, such as under the OS temp directory. They must not create, edit, delete, or move files inside the repository.
-- This command may take up to 60 minutes. Wait that long for it to complete. If you interrupt sooner, the user will pay the cost of the queries but get no benefit, and have to restart.
+- **Always pass `--timeout` when invoking.** Do not rely on the default. This command may take up to 60 minutes. Wait for it to complete. If you interrupt sooner, the user will pay the cost of the queries but get no benefit, and have to restart.
 
 ## Output
 

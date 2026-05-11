@@ -5,11 +5,11 @@ Agent skill that runs N independent `opencode run` subagents against the same qu
 ## Run
 
 ```bash
-cd scripts/3-views && go run . --query "<text>" --cwd "<dir>"
-cd scripts/3-views && go run . --query-file "<path>" --cwd "<dir>" --agents 5
+cd scripts/3-views && go run . --query "<text>" --cwd "<dir>" --timeout 60
+cd scripts/3-views && go run . --query-file "<path>" --cwd "<dir>" --agents 5 --timeout 60
 ```
 
-`--cwd` is required. Default `--agents 3`, max 6. Default `--timeout 60` (minutes).
+`--cwd` is required. Default `--agents 3`, max 6. **Always pass `--timeout`.** Timeout is wall-clock minutes. Default 60.
 
 ## Architecture
 
