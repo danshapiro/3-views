@@ -23,7 +23,7 @@ cd scripts/3-views && go run . --query-file "<path>" --cwd "<dir>" --agents 5
 
 - Agent labels are fixed order: alpha, bravo, charlie, delta, echo, foxtrot
 - Output is always emitted in label order regardless of completion order
-- All subagents are read-only (no edit, no write, restricted bash)
+- All subagents are repository read-only (no repository edits; temporary scratch files outside the repo are allowed)
 - Each run creates a temp directory with `{label}.md`, `{label}.stderr.log`, `metadata.json`, `query.txt`
 - **No extraneous docs:** Do not create `README.md`, `CHANGELOG.md`, or other standard repo files. The product is `SKILL.md` + its scripts/configs.
 

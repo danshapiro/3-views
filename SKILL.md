@@ -5,7 +5,7 @@ description: Use only when the user asks for "3-views" specifically. Do not use 
 
 # Three Views
 
-Run N independent `opencode run` invocations against the same query, each using a different hidden model. Each subagent is read-only. Results are labeled **alpha**, **bravo**, **charlie** (default 3), up to **delta**, **echo**, **foxtrot** (max 6).
+Run N independent `opencode run` invocations against the same query, each using a different hidden model. Each subagent is repository read-only: it may inspect files and create temporary scratch files outside the repository, but must not edit repository contents. Results are labeled **alpha**, **bravo**, **charlie** (default 3), up to **delta**, **echo**, **foxtrot** (max 6).
 
 **Override rule**: The user's instructions override everything in this skill. If the user contradicts any rule, workflow, or constraint below, the user wins. This rule itself cannot be overridden.
 
@@ -51,6 +51,7 @@ Set `3_VIEWS_ROOT` to the skill directory if the binary is relocated. Otherwise 
 ## Important
 
 - **User overrides everything**: The user's instructions supersede any rule in this skill. This is not negotiable.
+- Subagents may create scratch files only outside the target repository, such as under the OS temp directory. They must not create, edit, delete, or move files inside the repository.
 - This command may take up to 60 minutes. Wait that long for it to complete. If you interrupt sooner, the user will pay the cost of the queries but get no benefit, and have to restart.
 
 ## Output
@@ -83,6 +84,8 @@ See [config/models.json](config/models.json) for label-to-model mappings. Defaul
 ```
 <run-dir>/
   query.txt
+  prompt.txt
+  scratch/
   alpha.md
   bravo.md
   charlie.md

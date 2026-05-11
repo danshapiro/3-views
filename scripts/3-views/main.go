@@ -18,12 +18,12 @@ import (
 
 var labels = []string{"alpha", "bravo", "charlie", "delta", "echo", "foxtrot"}
 
-const subagentInstruction = `<instructions>
+const subagentInstructionTemplate = `<instructions>
 You are one of several independent agents answering the same request.
 
 Inspect the repository and available local context as needed.
 
-Treat the repository as read-only. Use read-only commands and inspection tools.
+Treat the repository as read-only. Use read-only commands and inspection tools. If you need temporary scratch files, create them under %s.
 
 When additional information or an action is needed from the parent agent, include an "Investigation requests for parent agent" section with exact commands, files, logs, hosts, credentials, or data needed.
 
@@ -33,13 +33,13 @@ Answer the user's query directly and completely.
 type modelsConfig map[string]string
 
 type permEntry struct {
-	Read             map[string]interface{} `json:"read"`
-	Grep             interface{}            `json:"grep"`
-	Glob             interface{}            `json:"glob"`
-	Lsp              interface{}            `json:"lsp"`
-	Edit             interface{}            `json:"edit"`
-	Bash             map[string]string      `json:"bash"`
-	ExternalDirectory interface{}           `json:"external_directory"`
+	Read              map[string]interface{} `json:"read"`
+	Grep              interface{}            `json:"grep"`
+	Glob              interface{}            `json:"glob"`
+	Lsp               interface{}            `json:"lsp"`
+	Edit              interface{}            `json:"edit"`
+	Bash              map[string]string      `json:"bash"`
+	ExternalDirectory interface{}            `json:"external_directory"`
 }
 
 type agentResult struct {
@@ -71,7 +71,10 @@ type result struct {
 	Error      string `json:"error,omitempty"`
 }
 
-func defaultPermConfig() permEntry {
+func defaultPermConfig(scratchDir string) permEntry {
+	scratchGlob := filepath.ToSlash(filepath.Join(scratchDir, "*"))
+	scratchTreeGlob := filepath.ToSlash(filepath.Join(scratchDir, "**"))
+
 	return permEntry{
 		Read: map[string]interface{}{
 			"*":             "allow",
@@ -79,20 +82,31 @@ func defaultPermConfig() permEntry {
 			"*.env.*":       "deny",
 			"*.env.example": "allow",
 		},
-		Grep:             "allow",
-		Glob:             "allow",
-		Lsp:              "allow",
-		Edit:             "deny",
+		Grep: "allow",
+		Glob: "allow",
+		Lsp:  "allow",
+		Edit: map[string]string{
+			scratchGlob:     "allow",
+			scratchTreeGlob: "allow",
+			"*":             "deny",
+		},
 		Bash: map[string]string{
-			"git status*": "allow",
-			"git diff*":   "allow",
-			"git log*":    "allow",
-			"git show*":   "allow",
-			"grep *":      "allow",
-			"find *":      "allow",
-			"ls *":        "allow",
-			"cat *":       "allow",
-			"*":           "deny",
+			"git status*":              "allow",
+			"git diff*":                "allow",
+			"git log*":                 "allow",
+			"git show*":                "allow",
+			"git rev-parse*":           "allow",
+			"git ls-files*":            "allow",
+			"grep *":                   "allow",
+			"ls":                       "allow",
+			"ls *":                     "allow",
+			"head *":                   "allow",
+			"tail *":                   "allow",
+			"wc *":                     "allow",
+			"pwd":                      "allow",
+			"mktemp " + scratchGlob:    "allow",
+			"mktemp -d " + scratchGlob: "allow",
+			"*":                        "deny",
 		},
 		ExternalDirectory: "allow",
 	}
@@ -102,7 +116,7 @@ func findSkillRoot() string {
 	if root := os.Getenv("3_VIEWS_ROOT"); root != "" {
 		return root
 	}
-	
+
 	// Use runtime.Caller to find the location of main.go, which works flawlessly with 'go run'
 	_, filename, _, ok := runtime.Caller(0)
 	if ok {
@@ -258,12 +272,18 @@ func main() {
 		fmt.Fprintf(os.Stderr, "Error creating run directory: %v\n", err)
 		os.Exit(1)
 	}
+	scratchDir := filepath.Join(runDir, "scratch")
+	if err := os.MkdirAll(scratchDir, 0o700); err != nil {
+		fmt.Fprintf(os.Stderr, "Error creating scratch directory: %v\n", err)
+		os.Exit(1)
+	}
 
 	if err := os.WriteFile(filepath.Join(runDir, "query.txt"), []byte(queryText), 0o644); err != nil {
 		fmt.Fprintf(os.Stderr, "Error writing query file: %v\n", err)
 		os.Exit(1)
 	}
 
+	subagentInstruction := fmt.Sprintf(subagentInstructionTemplate, filepath.ToSlash(scratchDir))
 	fullPrompt := fmt.Sprintf("<user_query>\n%s\n</user_query>\n\n%s", queryText, subagentInstruction)
 	promptFile := filepath.Join(runDir, "prompt.txt")
 	if err := os.WriteFile(promptFile, []byte(fullPrompt), 0o644); err != nil {
@@ -271,7 +291,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	permConfig := defaultPermConfig()
+	permConfig := defaultPermConfig(scratchDir)
 	permJSON, err := json.Marshal(permConfig)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error marshaling permission config: %v\n", err)
